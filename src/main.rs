@@ -9,9 +9,9 @@ fn main() {
 
     loop {
         let mut input = String::new();
-        print!("> ");
-        io::stdout().flush().unwrap();
         if auth_flag {
+            print!("> ");
+            io::stdout().flush().unwrap();
             match util::read_input(&mut input) {
                 Ok(i) => commands::command::handle_command(&mut i.to_string()),
                 Err(e) => println!("Error processing input: {e}"),

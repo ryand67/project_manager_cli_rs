@@ -44,45 +44,30 @@ fn handle_signup(flag: &mut bool) {
     )
     .unwrap();
 
-    let mut email = String::new();
-    let mut password = String::new();
+    let (email, password) = prompt_email_pw();
 
-    print!("Email: ");
-    io::stdout().flush().unwrap();
-    read_input(&mut email).expect("Error reading input.");
     let valid = email_regex.is_match(&email);
     if !valid {
         println!("Invalid email");
         *flag = false;
         return;
     }
-
-    print!("Password: ");
-    io::stdout().flush().unwrap();
-    read_input(&mut password).expect("Error reading input.");
-
     let hashed_pw = hex_digest(Algorithm::SHA256, &password.as_bytes());
-
-    let conn = open_db().expect("Error opening db");
-
-    let check_statement =
-        clean_for_sql(format!(r#"select * from users where email = "{}";"#, email));
-
-    let mut statement = conn.prepare(check_statement).unwrap();
-
-    // Checks whether the email is in use
-    while let State::Row = statement.next().unwrap() {
-        if statement.read::<String>(1).unwrap() == email {
-            println!("Email: {} already in use.", email);
-            *flag = false;
-            return;
-        }
-    }
 
     let insert_statement = clean_for_sql(format!(
         r#"insert into users (email, password) values ("{}", "{}")"#,
         email, hashed_pw
     ));
+
+    let exists = check_email_exists(&email);
+
+    if exists {
+        println!("Email {} already in use!", &email);
+        *flag = false;
+        return;
+    }
+
+    let conn = open_db().expect("Error opening db");
 
     conn.execute(insert_statement)
         .expect("Error creating account");
@@ -91,5 +76,37 @@ fn handle_signup(flag: &mut bool) {
 }
 
 fn handle_login() {
-    todo!();
+    let (email, password) = prompt_email_pw();
+    println!("{:?}", email);
+    println!("{:?}", password);
+}
+
+fn prompt_email_pw() -> (String, String) {
+    let mut email = String::new();
+    let mut password = String::new();
+
+    print!("Email: ");
+    io::stdout().flush().unwrap();
+    read_input(&mut email).expect("Error reading input.");
+
+    print!("Password: ");
+    io::stdout().flush().unwrap();
+    read_input(&mut password).expect("Error reading input.");
+
+    (email, password)
+}
+
+fn check_email_exists(e: &String) -> bool {
+    let conn = open_db().expect("Error opening db");
+
+    let check_statement = clean_for_sql(format!(r#"select * from users where email = "{}";"#, e));
+
+    let mut statement = conn.prepare(check_statement).unwrap();
+
+    while let State::Row = statement.next().unwrap() {
+        if statement.read::<String>(1).unwrap() == e.to_owned() {
+            return true;
+        }
+    }
+    false
 }

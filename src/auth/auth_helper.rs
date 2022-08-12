@@ -1,4 +1,4 @@
-use crate::util::{open_db, read_input};
+use crate::util::{clean_for_sql, open_db, read_input};
 use crypto_hash::{hex_digest, Algorithm};
 use regex::Regex;
 use sqlite::{Connection, State};
@@ -61,21 +61,17 @@ fn handle_signup(flag: &mut bool) {
     let hashed_pw = hex_digest(Algorithm::SHA256, &password.as_bytes());
 
     let conn = open_db().expect("Error opening db");
-    // let mut re = conn.prepare("select * from test").unwrap();
 
-    // while let State::Row = re.next().unwrap() {
-    //     println!("{:?}", re.read::<String>(0).unwrap());
-    // }
+    let s = clean_for_sql(format!(r#"select * from users where email = "{}";"#, email));
 
-    let s = format!(r#"select * from users where email = "{}";"#, email).replace("\"", "\"");
+    let mut statement = conn.prepare(s).unwrap();
 
-    conn.iterate(s, |pairs| {
-        for &(col, val) in pairs.iter() {
-            println!("{} = {}", col, val.unwrap());
+    while let State::Row = statement.next().unwrap() {
+        if statement.read::<String>(1).unwrap() == email {
+            println!("Match {}", email);
         }
-        true
-    })
-    .unwrap();
+    }
+
     *flag = false;
 }
 

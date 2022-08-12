@@ -8,3 +8,8 @@ pub fn read_input(input: &mut String) -> Result<String, std::io::Error> {
 
     Ok(input.clone())
 }
+
+pub fn clean_for_sql(input: String) -> String {
+    let s = input.replace("\"", "\"");
+    String::from(s)
+}

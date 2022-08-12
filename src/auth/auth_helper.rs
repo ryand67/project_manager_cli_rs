@@ -16,13 +16,9 @@ pub fn handle_auth(flag: &mut bool) -> User {
         }
 
         if input == "s" || input == "S" {
-            let mut s = false;
-            let user = handle_signup(&mut s).unwrap();
-            // if sign up was successful set the flag for the rest of the app
-            if s {
-                *flag = true;
-                println!("Welcome, {}.", user.name);
-                break user;
+            match handle_signup() {
+                Ok(u) => break u,
+                Err(()) => continue,
             }
         } else if input == "l" || input == "L" {
             handle_login();
@@ -38,7 +34,7 @@ pub fn handle_auth(flag: &mut bool) -> User {
     }
 }
 
-fn handle_signup(flag: &mut bool) -> Result<User, ()> {
+fn handle_signup() -> Result<User, ()> {
     let email_regex = Regex::new(
         r"^([a-z0-9_+]([a-z0-9_+.]*[a-z0-9_+])?)@([a-z0-9]+([\-\.]{1}[a-z0-9]+)*\.[a-z]{2,6})",
     )
@@ -49,7 +45,6 @@ fn handle_signup(flag: &mut bool) -> Result<User, ()> {
     let valid = email_regex.is_match(&email);
     if !valid {
         println!("Invalid email");
-        *flag = false;
         return Err(());
     }
 
@@ -67,7 +62,6 @@ fn handle_signup(flag: &mut bool) -> Result<User, ()> {
 
     if exists {
         println!("Email {} already in use!", &email);
-        *flag = false;
         return Err(());
     }
 
@@ -81,7 +75,6 @@ fn handle_signup(flag: &mut bool) -> Result<User, ()> {
     conn.execute(insert_statement)
         .expect("Error creating account");
 
-    *flag = true;
     Ok(User::new(email, name, role))
 }
 

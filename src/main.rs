@@ -21,6 +21,7 @@ fn main() {
             }
         } else {
             user = auth::auth_helper::handle_auth(&mut auth_flag);
+            println!("{:?}", user.name);
         }
 
         input = String::new();

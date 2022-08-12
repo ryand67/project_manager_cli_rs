@@ -18,8 +18,7 @@ pub fn open_db() -> Result<Connection, Error> {
             r#"
         create table if not exists users (userId integer primary key autoincrement,
         email varchar(255) not null,
-        password varchar(255) not null
-        );
+        password varchar(255) not null);
         "#,
         )
         .expect("migration error");

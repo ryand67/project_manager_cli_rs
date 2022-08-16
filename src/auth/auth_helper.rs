@@ -1,10 +1,10 @@
 use crate::util::{clean_for_sql, open_db, read_input, User};
 use crypto_hash::{hex_digest, Algorithm};
 use regex::Regex;
-use sqlite::State;
+use sqlite::{Connection, State};
 use std::io::{self, Write};
 
-pub fn handle_auth(flag: &mut bool) -> User {
+pub fn handle_auth(flag: &mut bool, conn: &Connection) -> User {
     let mut input = String::new();
     loop {
         print!("> ");
@@ -16,12 +16,23 @@ pub fn handle_auth(flag: &mut bool) -> User {
         }
 
         if input == "s" || input == "S" {
-            match handle_signup() {
-                Ok(u) => break u,
+            match handle_signup(conn) {
+                Ok(u) => {
+                    *flag = true;
+                    break u;
+                }
                 Err(()) => continue,
             }
         } else if input == "l" || input == "L" {
-            handle_login();
+            match handle_login(conn) {
+                Ok(u) => {
+                    *flag = true;
+                    break u;
+                }
+                Err(()) => {
+                    println!("Wrong email/password.");
+                }
+            }
         } else if input == "q" {
             std::process::exit(0);
         } else {
@@ -34,7 +45,7 @@ pub fn handle_auth(flag: &mut bool) -> User {
     }
 }
 
-fn handle_signup() -> Result<User, ()> {
+fn handle_signup(conn: &Connection) -> Result<User, ()> {
     let email_regex = Regex::new(
         r"^([a-z0-9_+]([a-z0-9_+.]*[a-z0-9_+])?)@([a-z0-9]+([\-\.]{1}[a-z0-9]+)*\.[a-z]{2,6})",
     )
@@ -65,8 +76,6 @@ fn handle_signup() -> Result<User, ()> {
         return Err(());
     }
 
-    let conn = open_db().expect("Error opening db");
-
     let insert_statement = clean_for_sql(format!(
         r#"insert into users (email, password, name, role) values ("{}", "{}", "{}", "{}")"#,
         email, password, name, role
@@ -75,7 +84,9 @@ fn handle_signup() -> Result<User, ()> {
     conn.execute(insert_statement)
         .expect("Error creating account");
 
-    Ok(User::new(email, name, role))
+    let id = get_user_id(&email, &conn);
+
+    Ok(User::new(email, name, role, id))
 }
 
 fn prompt_email_pw() -> (String, String) {
@@ -95,8 +106,7 @@ fn prompt_email_pw() -> (String, String) {
     (email, hashed_pw)
 }
 
-fn handle_login() {
-    let conn = open_db().expect("Error opening db");
+fn handle_login(conn: &Connection) -> Result<User, ()> {
     let (email, password) = prompt_email_pw();
 
     let check_statement =
@@ -108,8 +118,35 @@ fn handle_login() {
         if statement.read::<String>(1).unwrap() == email.to_owned()
             && statement.read::<String>(2).unwrap() == password
         {
-            println!("LOGIN");
+            return Ok(User::new(
+                statement.read::<String>(1).unwrap(),
+                statement.read::<String>(3).unwrap(),
+                statement.read::<String>(4).unwrap(),
+                statement.read::<i64>(0).unwrap(),
+            ));
         }
+    }
+
+    Err(())
+}
+
+fn get_user_id(e: &String, conn: &Connection) -> i64 {
+    let check_statement = clean_for_sql(format!(
+        r#"select userId from users where email = "{}";"#,
+        e
+    ));
+
+    let mut statement = conn.prepare(check_statement).unwrap();
+
+    let mut result: i64 = 0;
+    while let State::Row = statement.next().unwrap() {
+        result = statement.read::<i64>(0).unwrap();
+    }
+
+    if result > 0 {
+        result
+    } else {
+        -1
     }
 }
 

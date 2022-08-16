@@ -19,6 +19,7 @@ pub fn handle_auth(flag: &mut bool, conn: &Connection) -> User {
             match handle_signup(conn) {
                 Ok(u) => {
                     *flag = true;
+                    greeting(&u);
                     break u;
                 }
                 Err(()) => continue,
@@ -27,6 +28,7 @@ pub fn handle_auth(flag: &mut bool, conn: &Connection) -> User {
             match handle_login(conn) {
                 Ok(u) => {
                     *flag = true;
+                    greeting(&u);
                     break u;
                 }
                 Err(()) => {
@@ -103,7 +105,7 @@ fn prompt_email_pw() -> (String, String) {
 
     let hashed_pw = hex_digest(Algorithm::SHA256, &password.as_bytes());
 
-    (email, hashed_pw)
+    (email.trim().to_string(), hashed_pw.trim().to_string())
 }
 
 fn handle_login(conn: &Connection) -> Result<User, ()> {
@@ -163,4 +165,8 @@ fn check_email_exists(e: &String) -> bool {
         }
     }
     false
+}
+
+fn greeting(u: &User) {
+    println!("Welcome to the app, {}.", u.name);
 }

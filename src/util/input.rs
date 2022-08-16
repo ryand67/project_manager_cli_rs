@@ -1,4 +1,4 @@
-use std::io::stdin;
+use std::io::{self, stdin, Write};
 
 pub fn read_input(input: &mut String) -> Result<String, std::io::Error> {
     match stdin().read_line(input) {
@@ -12,4 +12,9 @@ pub fn read_input(input: &mut String) -> Result<String, std::io::Error> {
 pub fn clean_for_sql(input: String) -> String {
     let s = input.replace("\"", "\"");
     String::from(s)
+}
+
+pub fn print_prompt() {
+    print!("> ");
+    io::stdout().flush().unwrap();
 }

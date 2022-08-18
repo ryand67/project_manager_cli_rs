@@ -25,5 +25,17 @@ pub fn open_db() -> Result<Connection, Error> {
         )
         .expect("migration error");
 
+    connection
+        .execute(
+            r#"
+        create table if not exists projects (projectId integer unique primary key autoincrement,
+        authorId integer not null,
+        title varchar(255) not null,
+        status varchar(255) check (status in ('backlog', 'in progress', 'done')) not null default 'backlog'
+        );
+        "#,
+        )
+        .expect("migration error");
+
     Ok(connection)
 }

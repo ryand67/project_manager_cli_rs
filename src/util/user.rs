@@ -14,4 +14,13 @@ impl User {
             id,
         }
     }
+
+    pub fn default() -> Self {
+        Self {
+            email: "".to_string(),
+            name: "".to_string(),
+            role: "".to_string(),
+            id: 0,
+        }
+    }
 }

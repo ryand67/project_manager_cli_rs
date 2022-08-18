@@ -1,12 +1,14 @@
 use std::io::{self, stdin, Write};
 
-pub fn read_input(input: &mut String) -> Result<String, std::io::Error> {
-    match stdin().read_line(input) {
-        Ok(_) => input.truncate(input.len() - 1),
+pub fn read_input(buffer: &mut String) -> Result<String, std::io::Error> {
+    match stdin().read_line(buffer) {
+        Ok(_) => {
+            buffer.truncate(buffer.len() - 1);
+        }
         Err(e) => panic!("Error: {e}"),
     }
 
-    Ok(input.clone())
+    Ok(buffer.trim().to_string())
 }
 
 pub fn clean_for_sql(input: String) -> String {

@@ -25,7 +25,8 @@ pub fn handle_auth(flag: &mut bool, conn: &Connection) -> User {
                 Err(()) => continue,
             }
         } else if input == "l" || input == "L" {
-            match handle_login(conn) {
+            let (email, password) = prompt_email_pw();
+            match handle_login(conn, email, password) {
                 Ok(u) => {
                     *flag = true;
                     greeting(&u);
@@ -108,9 +109,7 @@ fn prompt_email_pw() -> (String, String) {
     (email.trim().to_string(), hashed_pw.trim().to_string())
 }
 
-fn handle_login(conn: &Connection) -> Result<User, ()> {
-    let (email, password) = prompt_email_pw();
-
+pub fn handle_login(conn: &Connection, email: String, password: String) -> Result<User, ()> {
     let check_statement =
         clean_for_sql(format!(r#"select * from users where email = "{}";"#, email));
 
@@ -167,6 +166,6 @@ fn check_email_exists(e: &String) -> bool {
     false
 }
 
-fn greeting(u: &User) {
+pub fn greeting(u: &User) {
     println!("Welcome to the app, {}.", u.name);
 }

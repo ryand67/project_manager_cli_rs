@@ -1,3 +1,5 @@
+use termion::color;
+
 struct Command {
     name: String,
     description: String,
@@ -34,6 +36,12 @@ pub fn print_help() {
     ];
 
     for c in command_log.iter() {
-        println!("{} - {} - {}", c.name, c.description, c.keys.join(", "));
+        println!(
+            "{}{} - {} - {}",
+            color::Fg(color::White),
+            c.name,
+            c.description,
+            c.keys.join(", ")
+        );
     }
 }

@@ -16,6 +16,7 @@ fn main() {
 
     let args: Vec<String> = env::args().skip(1).collect();
 
+    // Handle login via command line
     if args.len() == 2 {
         let hashed_pw = hex_digest(Algorithm::SHA256, &args[1].as_bytes());
 
@@ -32,8 +33,7 @@ fn main() {
     loop {
         let mut input = String::new();
         if auth_flag {
-            print_prompt();
-            match read_input(&mut input) {
+            match read_input("> ".to_string(), &mut input) {
                 Ok(i) => handle_command(&mut i.to_string(), &user, &conn),
                 Err(e) => println!("Error processing input: {e}"),
             }

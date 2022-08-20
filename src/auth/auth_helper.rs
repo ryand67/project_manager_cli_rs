@@ -1,16 +1,15 @@
-use crate::util::{clean_for_sql, open_db, read_input, User};
+use crate::util::{clean_for_sql, open_db, print_prompt, read_input, User};
 use crypto_hash::{hex_digest, Algorithm};
 use regex::Regex;
 use sqlite::{Connection, State};
 use std::io::{self, Write};
+use termion::color;
 
 pub fn handle_auth(flag: &mut bool, conn: &Connection) -> User {
     let mut input = String::new();
     loop {
-        print!("> ");
-        io::stdout().flush().unwrap();
-        println!("Login or Signup? (l/s)");
-        match read_input(&mut input) {
+        print_prompt();
+        match read_input("Login or Signup? (l/s)".to_string(), &mut input) {
             Err(e) => panic!("Error: {e}"),
             _ => (),
         }
@@ -63,14 +62,10 @@ fn handle_signup(conn: &Connection) -> Result<User, ()> {
     }
 
     let mut name = String::new();
-    print!("Name: ");
-    io::stdout().flush().unwrap();
-    read_input(&mut name).expect("Error reading input.");
+    read_input("Name: ".to_string(), &mut name).expect("Error reading input.");
 
     let mut role = String::new();
-    print!("Role: ");
-    io::stdout().flush().unwrap();
-    read_input(&mut role).expect("Error reading input.");
+    read_input("Role: ".to_string(), &mut role).expect("Error reading input.");
 
     let exists = check_email_exists(&email);
 
@@ -96,13 +91,9 @@ fn prompt_email_pw() -> (String, String) {
     let mut email = String::new();
     let mut password = String::new();
 
-    print!("Email: ");
-    io::stdout().flush().unwrap();
-    read_input(&mut email).expect("Error reading input.");
+    read_input("Email: ".to_string(), &mut email).expect("Error reading input.");
 
-    print!("Password: ");
-    io::stdout().flush().unwrap();
-    read_input(&mut password).expect("Error reading input.");
+    read_input("Password: ".to_string(), &mut password).expect("Error reading input.");
 
     let hashed_pw = hex_digest(Algorithm::SHA256, &password.as_bytes());
 
@@ -167,5 +158,5 @@ fn check_email_exists(e: &String) -> bool {
 }
 
 pub fn greeting(u: &User) {
-    println!("Welcome to the app, {}.", u.name);
+    println!("{}Welcome to the app, {}.", color::Fg(color::Blue), u.name);
 }

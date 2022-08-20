@@ -28,10 +28,12 @@ pub fn open_db() -> Result<Connection, Error> {
     connection
         .execute(
             r#"
-        create table if not exists projects (projectId integer unique primary key autoincrement,
+        create table if not exists projects
+        (projectId integer unique primary key autoincrement,
         authorId integer not null,
         title varchar(255) not null,
-        status varchar(255) check (status in ('backlog', 'in progress', 'done')) not null default 'backlog'
+        status varchar(255) check (status in ('backlog', 'in progress', 'done')) not null default 'backlog',
+        foreign key(authorId) references users(userId)
         );
         "#,
         )
